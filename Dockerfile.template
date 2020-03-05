@@ -1,0 +1,28 @@
+FROM balenalib/%%BALENA_MACHINE_NAME%%-node:build as builder 
+
+RUN install_packages cmake ninja
+
+WORKDIR /usr/src/
+
+RUN git clone https://github.com/wasm3/wasm3
+
+WORKDIR /usr/src/wasm3/build
+
+RUN cmake .. && \
+    make -j8
+
+FROM balenalib/%%BALENA_MACHINE_NAME%%
+
+COPY --from=builder /usr/src/wasm3/build /usr/local/bin/
+
+WORKDIR /usr/src/app
+
+
+COPY . .
+
+RUN chmod u+x start.sh
+
+RUN curl https://raw.githubusercontent.com/wasm3/wasm3/master/test/lang/fib32.wasm -o fib32.wasm
+
+
+CMD ["./start.sh"]
