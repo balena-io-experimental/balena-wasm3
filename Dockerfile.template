@@ -13,7 +13,7 @@ RUN cmake .. && \
 
 FROM balenalib/%%BALENA_MACHINE_NAME%%
 
-COPY --from=builder /usr/src/wasm3/build /usr/local/bin/
+COPY --from=builder /usr/src/wasm3/build/wasm3 /usr/local/bin/
 
 WORKDIR /usr/src/app
 
