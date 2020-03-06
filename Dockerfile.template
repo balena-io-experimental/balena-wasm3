@@ -1,6 +1,6 @@
 FROM balenalib/%%BALENA_MACHINE_NAME%%-node:build as builder 
 
-RUN install_packages cmake ninja
+RUN install_packages cmake ninja-build
 
 WORKDIR /usr/src/
 
@@ -11,8 +11,20 @@ WORKDIR /usr/src/wasm3/build
 RUN cmake .. && \
     make -j8
 
+COPY as_demo /usr/src/as_demo
+
+WORKDIR /usr/src/as_demo
+
+# install dependencies
+RUN npm install
+
+# build optimised wasm module
+RUN npm run asbuild:optimized
+
+# Smaller image 
 FROM balenalib/%%BALENA_MACHINE_NAME%%
 
+# get the wasm3 runtime binary from builder
 COPY --from=builder /usr/src/wasm3/build/wasm3 /usr/local/bin/
 
 WORKDIR /usr/src/app
@@ -22,7 +34,10 @@ COPY . .
 
 RUN chmod u+x start.sh
 
+# Download the fib32 wasm module
 RUN curl https://raw.githubusercontent.com/wasm3/wasm3/master/test/lang/fib32.wasm -o fib32.wasm
 
+# Get the sample assembly demo from builder
+COPY --from=builder /usr/src/as_demo/build/optimized.wasm as_demo.wasm
 
 CMD ["./start.sh"]
